@@ -7,6 +7,13 @@ const QuestionSchema = new mongoose.Schema({
     enum: ["text", "multiple-choice", "true-false", "numeric"],
     required: true,
   },
+  allowMultipleSelections: {
+    type: Boolean,
+    required: function () {
+      return this.type === "multiple-choice";
+    },
+    default: false,
+  },
   options: [
     {
       text: { type: String, required: function () { return this.type !== "text"; } }, // Answer option text
