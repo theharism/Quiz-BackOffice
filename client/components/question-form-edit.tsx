@@ -15,22 +15,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { toast } from "@/hooks/use-toast"
-import type { Question } from "@/components/question-list"
+import { type Question, updateQuestion } from "@/lib/api"
 
 // Define the score categories
-const SCORE_CATEGORIES = [
-  "TRT (Testosterone Replacement Therapy)",
-  "Build (Muscle Building)",
-  "Peptides",
-  "Lean (Fat Loss / Lean Body)",
-  "GLP1 (Glucagon-like Peptide-1)",
-  "Tadalafil (Libido / Erectile Dysfunction)",
-]
+const SCORE_CATEGORIES = ["TRT", "Build", "Peptides", "Lean", "GLP1", "Tadalafil"]
 
 // Define the option schema
 const optionSchema = z.object({
+  _id: z.string().optional(),
   text: z.string().min(1, "Option text is required"),
-  scores: z.record(
+  score: z.record(
     z.string(),
     z.number().or(
       z.string().transform((val) => {
@@ -44,8 +38,8 @@ const optionSchema = z.object({
 
 // Define the form schema
 const formSchema = z.object({
-  questionText: z.string().min(1, "Question text is required"),
-  questionType: z.enum(["text", "multiple-choice", "true-false", "numeric"]),
+  text: z.string().min(1, "Question text is required"),
+  type: z.enum(["text", "multiple-choice", "true-false", "numeric"]),
   isRequired: z.boolean().default(true),
   category: z.enum(["basic-info", "symptoms", "lifestyle"]),
   allowMultipleSelections: z.boolean().optional(),
@@ -54,11 +48,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-interface QuestionFormProps {
+interface QuestionFormEditProps {
   question: Question
 }
 
-export function QuestionForm({ question }: QuestionFormProps) {
+export function QuestionFormEdit({ question }: QuestionFormEditProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -66,16 +60,16 @@ export function QuestionForm({ question }: QuestionFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      questionText: question.questionText,
-      questionType: question.questionType,
+      text: question.text,
+      type: question.type,
       isRequired: question.isRequired,
       category: question.category,
-      allowMultipleSelections: question.allowMultipleSelections || false,
-      options: question.options || [],
+      allowMultipleSelections: question.allowMultipleSelections,
+      options: question.options,
     },
   })
 
-  const questionType = form.watch("questionType")
+  const questionType = form.watch("type")
   const options = form.watch("options") || []
 
   // Add a new option
@@ -88,7 +82,7 @@ export function QuestionForm({ question }: QuestionFormProps) {
       scoreObj[category] = 0
     })
 
-    form.setValue("options", [...currentOptions, { text: "", scores: scoreObj }])
+    form.setValue("options", [...currentOptions, { text: "", score: scoreObj }])
   }
 
   // Remove an option
@@ -105,36 +99,16 @@ export function QuestionForm({ question }: QuestionFormProps) {
     setIsSubmitting(true)
 
     try {
-      // Get existing questions from localStorage
-      const storedQuestions = localStorage.getItem("quizQuestions")
-      if (storedQuestions) {
-        const questions = JSON.parse(storedQuestions) as Question[]
+      // Update the question via API
+      await updateQuestion(question._id, data)
 
-        // Find and update the question
-        const updatedQuestions = questions.map((q) => {
-          if (q.id === question.id) {
-            return {
-              ...q,
-              ...data,
-              // Preserve the creation date and ID
-              createdAt: q.createdAt,
-              id: q.id,
-            }
-          }
-          return q
-        })
+      toast({
+        title: "Question updated",
+        description: "Your question has been updated successfully.",
+      })
 
-        // Save back to localStorage
-        localStorage.setItem("quizQuestions", JSON.stringify(updatedQuestions))
-
-        toast({
-          title: "Question updated",
-          description: "Your question has been updated successfully.",
-        })
-
-        // Navigate back to the questions list
-        router.push("/quiz")
-      }
+      // Navigate back to the questions list
+      router.push("/quiz")
     } catch (error) {
       toast({
         title: "Error",
@@ -157,8 +131,8 @@ export function QuestionForm({ question }: QuestionFormProps) {
       })
 
       form.setValue("options", [
-        { text: "True", scores: { ...scoreObj } },
-        { text: "False", scores: { ...scoreObj } },
+        { text: "True", score: { ...scoreObj } },
+        { text: "False", score: { ...scoreObj } },
       ])
     }
   }
@@ -183,7 +157,7 @@ export function QuestionForm({ question }: QuestionFormProps) {
             {/* Question Text */}
             <FormField
               control={form.control}
-              name="questionText"
+              name="text"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Question Text</FormLabel>
@@ -199,7 +173,7 @@ export function QuestionForm({ question }: QuestionFormProps) {
               {/* Question Type */}
               <FormField
                 control={form.control}
-                name="questionType"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Question Type</FormLabel>
@@ -331,10 +305,24 @@ export function QuestionForm({ question }: QuestionFormProps) {
                           <FormField
                             key={category}
                             control={form.control}
-                            name={`options.${index}.scores.${category}`}
+                            name={`options.${index}.score.${category}`}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-sm">{category}</FormLabel>
+                                <FormLabel className="text-sm">
+                                  {category === "TRT"
+                                    ? "TRT (Testosterone Replacement Therapy)"
+                                    : category === "Build"
+                                      ? "Build (Muscle Building)"
+                                      : category === "Peptides"
+                                        ? "Peptides"
+                                        : category === "Lean"
+                                          ? "Lean (Fat Loss / Lean Body)"
+                                          : category === "GLP1"
+                                            ? "GLP1 (Glucagon-like Peptide-1)"
+                                            : category === "Tadalafil"
+                                              ? "Tadalafil (Libido / Erectile Dysfunction)"
+                                              : category}
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"

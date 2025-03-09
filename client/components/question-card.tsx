@@ -1,6 +1,6 @@
 "use client"
 
-import type { Question } from "@/components/question-list"
+import type { Question } from "@/lib/api"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,9 @@ interface QuestionCardProps {
 
 export function QuestionCard({ question, onDelete }: QuestionCardProps) {
   // Format the creation date
-  const formattedDate = formatDistanceToNow(new Date(question.createdAt), { addSuffix: true })
+  const formattedDate = question.createdAt
+    ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true })
+    : "Unknown date"
 
   // Get the question type display text
   const getQuestionTypeText = (type: string) => {
@@ -66,12 +68,12 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
       <CardContent className="pt-6">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-start">
-            <h3 className="text-lg font-medium line-clamp-2">{question.questionText}</h3>
+            <h3 className="text-lg font-medium line-clamp-2">{question.text}</h3>
             <div className="flex space-x-2">
               <Badge variant="outline" className={getCategoryColor(question.category)}>
                 {getCategoryText(question.category)}
               </Badge>
-              <Badge variant="secondary">{getQuestionTypeText(question.questionType)}</Badge>
+              <Badge variant="secondary">{getQuestionTypeText(question.type)}</Badge>
             </div>
           </div>
 
@@ -91,7 +93,7 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
             )}
           </div>
 
-          {question.questionType === "multiple-choice" && (
+          {question.type === "multiple-choice" && (
             <div className="mt-2">
               <p className="text-sm text-muted-foreground mb-1">
                 {question.options?.length || 0} options •
@@ -115,7 +117,7 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
       </CardContent>
       <CardFooter className="border-t bg-muted/50 px-6 py-3">
         <div className="flex justify-between w-full">
-          <Link href={`/quiz/edit-question/${question.id}`} passHref>
+          <Link href={`/quiz/edit-question/${question._id}`} passHref>
             <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
               Edit
@@ -130,4 +132,3 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
     </Card>
   )
 }
-

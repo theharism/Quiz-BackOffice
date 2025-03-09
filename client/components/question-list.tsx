@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { QuestionCard } from "@/components/question-card"
+import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -16,120 +17,7 @@ import {
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// Define the question type
-export type QuestionOption = {
-  text: string
-  scores: Record<string, number>
-}
-
-export type Question = {
-  id: string
-  questionText: string
-  questionType: "text" | "multiple-choice" | "true-false" | "numeric"
-  isRequired: boolean
-  category: "basic-info" | "symptoms" | "lifestyle"
-  allowMultipleSelections?: boolean
-  options?: QuestionOption[]
-  createdAt: string
-}
-
-// Sample data for demonstration
-const sampleQuestions: Question[] = [
-  {
-    id: "1",
-    questionText: "What is your age?",
-    questionType: "numeric",
-    isRequired: true,
-    category: "basic-info",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "2",
-    questionText: "Do you experience fatigue during the day?",
-    questionType: "true-false",
-    isRequired: true,
-    category: "symptoms",
-    allowMultipleSelections: false,
-    options: [
-      {
-        text: "True",
-        scores: {
-          "TRT (Testosterone Replacement Therapy)": 5,
-          "Build (Muscle Building)": 2,
-          Peptides: 3,
-          "Lean (Fat Loss / Lean Body)": 1,
-          "GLP1 (Glucagon-like Peptide-1)": 0,
-          "Tadalafil (Libido / Erectile Dysfunction)": 2,
-        },
-      },
-      {
-        text: "False",
-        scores: {
-          "TRT (Testosterone Replacement Therapy)": 0,
-          "Build (Muscle Building)": 0,
-          Peptides: 0,
-          "Lean (Fat Loss / Lean Body)": 0,
-          "GLP1 (Glucagon-like Peptide-1)": 0,
-          "Tadalafil (Libido / Erectile Dysfunction)": 0,
-        },
-      },
-    ],
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "3",
-    questionText: "Which of the following symptoms do you experience?",
-    questionType: "multiple-choice",
-    isRequired: false,
-    category: "symptoms",
-    allowMultipleSelections: true,
-    options: [
-      {
-        text: "Low energy",
-        scores: {
-          "TRT (Testosterone Replacement Therapy)": 4,
-          "Build (Muscle Building)": 2,
-          Peptides: 3,
-          "Lean (Fat Loss / Lean Body)": 1,
-          "GLP1 (Glucagon-like Peptide-1)": 0,
-          "Tadalafil (Libido / Erectile Dysfunction)": 0,
-        },
-      },
-      {
-        text: "Difficulty sleeping",
-        scores: {
-          "TRT (Testosterone Replacement Therapy)": 3,
-          "Build (Muscle Building)": 1,
-          Peptides: 4,
-          "Lean (Fat Loss / Lean Body)": 0,
-          "GLP1 (Glucagon-like Peptide-1)": 0,
-          "Tadalafil (Libido / Erectile Dysfunction)": 0,
-        },
-      },
-      {
-        text: "Weight gain",
-        scores: {
-          "TRT (Testosterone Replacement Therapy)": 2,
-          "Build (Muscle Building)": 0,
-          Peptides: 1,
-          "Lean (Fat Loss / Lean Body)": 5,
-          "GLP1 (Glucagon-like Peptide-1)": 4,
-          "Tadalafil (Libido / Erectile Dysfunction)": 0,
-        },
-      },
-    ],
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "4",
-    questionText: "Describe your current exercise routine",
-    questionType: "text",
-    isRequired: true,
-    category: "lifestyle",
-    createdAt: new Date().toISOString(),
-  },
-]
+import { fetchQuestions, deleteQuestion, type Question } from "@/lib/api"
 
 export function QuestionList() {
   // State for questions
@@ -138,20 +26,34 @@ export function QuestionList() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // State for delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null)
 
-  // Load questions from localStorage or use sample data
+  // Load questions from API
   useEffect(() => {
-    const storedQuestions = localStorage.getItem("quizQuestions")
-    if (storedQuestions) {
-      setQuestions(JSON.parse(storedQuestions))
-    } else {
-      setQuestions(sampleQuestions)
-      localStorage.setItem("quizQuestions", JSON.stringify(sampleQuestions))
+    const getQuestions = async () => {
+      try {
+        setIsLoading(true)
+        const data = await fetchQuestions()
+        setQuestions(data)
+        setError(null)
+      } catch (err) {
+        setError("Failed to load questions. Please try again later.")
+        toast({
+          title: "Error",
+          description: "Failed to load questions. Please try again later.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    getQuestions()
   }, [])
 
   // Apply filters whenever questions, search term, or filters change
@@ -160,7 +62,7 @@ export function QuestionList() {
 
     // Apply search filter
     if (searchTerm) {
-      result = result.filter((q) => q.questionText.toLowerCase().includes(searchTerm.toLowerCase()))
+      result = result.filter((q) => q.text.toLowerCase().includes(searchTerm.toLowerCase()))
     }
 
     // Apply category filter
@@ -170,11 +72,15 @@ export function QuestionList() {
 
     // Apply type filter
     if (typeFilter !== "all") {
-      result = result.filter((q) => q.questionType === typeFilter)
+      result = result.filter((q) => q.type === typeFilter)
     }
 
     // Sort by creation date (newest first)
-    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    result.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    })
 
     setFilteredQuestions(result)
   }, [questions, searchTerm, categoryFilter, typeFilter])
@@ -186,18 +92,46 @@ export function QuestionList() {
   }
 
   // Handle actual deletion
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (questionToDelete) {
-      const updatedQuestions = questions.filter((q) => q.id !== questionToDelete)
-      setQuestions(updatedQuestions)
-      localStorage.setItem("quizQuestions", JSON.stringify(updatedQuestions))
-      toast({
-        title: "Question deleted",
-        description: "The question has been deleted successfully.",
-      })
+      try {
+        await deleteQuestion(questionToDelete)
+
+        // Update local state
+        const updatedQuestions = questions.filter((q) => q._id !== questionToDelete)
+        setQuestions(updatedQuestions)
+
+        toast({
+          title: "Question deleted",
+          description: "The question has been deleted successfully.",
+        })
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete the question. Please try again.",
+          variant: "destructive",
+        })
+      }
     }
     setDeleteDialogOpen(false)
     setQuestionToDelete(null)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-pulse text-lg">Loading questions...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    )
   }
 
   return (
@@ -244,7 +178,7 @@ export function QuestionList() {
       {filteredQuestions.length > 0 ? (
         <div className="grid grid-cols-1 gap-4">
           {filteredQuestions.map((question) => (
-            <QuestionCard key={question.id} question={question} onDelete={() => confirmDelete(question.id)} />
+            <QuestionCard key={question._id} question={question} onDelete={() => confirmDelete(question._id)} />
           ))}
         </div>
       ) : (
@@ -272,5 +206,24 @@ export function QuestionList() {
       </AlertDialog>
     </div>
   )
+}
+
+export interface QuestionOption {
+  _id?: string
+  text: string
+  score: Record<string, number>
+}
+
+export interface Question {
+  _id: string
+  text: string
+  type: "text" | "multiple-choice" | "true-false" | "numeric"
+  allowMultipleSelections: boolean
+  options: QuestionOption[]
+  isRequired: boolean
+  category: string
+  createdAt?: string
+  updatedAt?: string
+  __v?: number
 }
 
