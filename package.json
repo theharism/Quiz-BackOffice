@@ -1,0 +1,46 @@
+{
+  "name": "totalsports",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=production node server.js",
+    "server": "cross-env NODE_ENV=development nodemon server.js",
+    "client": "npm run dev --prefix client",
+    "build": "cross-env npm install --legacy-peer-deps --prefix client && npm run build --prefix client",
+    "gzip": "gzip -r -k client/dist",
+    "dev": "cross-env concurrently \"npm run server\" \"npm run client\" ",
+    "staging:server": "cross-env NODE_ENV=staging nodemon server.js",
+    "staging": "cross-env concurrently \"npm run staging:server\" \"npm run client\" ",
+    "analyze": "npm run analyze --prefix client"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "moment": "^2.30.1",
+    "mongoose": "^8.9.3",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "nodemon": "^3.1.9",
+    "swagger-autogen": "^2.23.7",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "config/swagger-ui.json"
+    ]
+  }
+}
