@@ -15,7 +15,7 @@ db();
 swagger(app);
 
 app.use(cors({
-  origin: 'http://localhost:3005',
+  origin: '*',
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type,Authorization'
 }));

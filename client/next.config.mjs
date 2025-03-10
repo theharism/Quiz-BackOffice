@@ -25,7 +25,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:3000/api/:path*", // Proxy API requests
+        destination: "http://localhost:3005/api/:path*", // Proxy API requests
       },
     ];
   },
