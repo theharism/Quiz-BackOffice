@@ -103,7 +103,7 @@ export function QuestionForm() {
       })
 
       // Navigate back to the questions list
-      router.push("/quiz")
+      router.push("/admin/quiz")
     } catch (error) {
       toast({
         title: "Error",

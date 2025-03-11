@@ -108,7 +108,7 @@ export function QuestionFormEdit({ question }: QuestionFormEditProps) {
       })
 
       // Navigate back to the questions list
-      router.push("/quiz")
+      router.push("/admin/quiz")
     } catch (error) {
       toast({
         title: "Error",
