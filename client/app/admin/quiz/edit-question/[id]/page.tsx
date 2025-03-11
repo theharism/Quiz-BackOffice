@@ -31,7 +31,7 @@ export default function EditQuestionPage() {
         } else {
           setError("Question not found")
           // Question not found, redirect to homepage after a delay
-          setTimeout(() => router.push("/quiz"), 2000)
+          setTimeout(() => router.push("/admin/quiz"), 2000)
         }
       } catch (err) {
         setError("Failed to load question. Please try again later.")
@@ -56,7 +56,7 @@ export default function EditQuestionPage() {
       <div className="container mx-auto py-6">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-4">{error || "Question not found"}</h2>
-          <Link href="/quiz">
+          <Link href="/admin/quiz">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Questions
@@ -70,7 +70,7 @@ export default function EditQuestionPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <Link href="/quiz">
+        <Link href="/admin/quiz">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Questions

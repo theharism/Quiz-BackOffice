@@ -59,6 +59,7 @@ export async function createQuestion(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(question),
+      credentials: "include"
     });
 
     if (!response.ok) {
@@ -90,6 +91,7 @@ export async function updateQuestion(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(question),
+      credentials: "include"
     });
 
     if (!response.ok) {
@@ -114,6 +116,7 @@ export async function deleteQuestion(id: string): Promise<void> {
   try {
     const response = await fetch(`${API_URL}/questions/${id}`, {
       method: "DELETE",
+      credentials: "include"
     });
 
     if (!response.ok) {
