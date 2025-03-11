@@ -117,7 +117,7 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
       </CardContent>
       <CardFooter className="border-t bg-muted/50 px-6 py-3">
         <div className="flex justify-between w-full">
-          <Link href={`/quiz/edit-question/${question._id}`} passHref>
+          <Link href={`/admin/quiz/edit-question/${question._id}`} passHref>
             <Button variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
               Edit

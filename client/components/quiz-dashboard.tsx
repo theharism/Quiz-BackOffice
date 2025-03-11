@@ -12,12 +12,15 @@ export function QuizDashboard() {
   const router = useRouter()
 
   const handleLogout = async () => {
-    await logout();
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    })
-    router.push("/admin")
+    const result = await logout();
+    if(result)
+    {
+        toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+        })
+        router.push("/admin")
+    }
   }
 
   return (

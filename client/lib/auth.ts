@@ -9,16 +9,15 @@ export const login = async (username: string, password: string): Promise<boolean
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ username, password }),
+          credentials: "include",
         });
     
         if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+            return false;
         }
     
-        const data = await response.json();
-    
-        if (!data.success) {
-          throw new Error("Failed to login");
+        if (response.status !== 200) {
+            return false;
         }
         return true;
     } catch (error) {
@@ -39,8 +38,10 @@ export const isAuthenticated = async (): Promise<boolean> => {
   
       if (!response.ok) return false;
   
-      const data = await response.json();
-      return data.success;
+      if (response.status !== 200) {
+        return false;
+      }
+      return true;
     } catch (error) {
       console.error("Error checking authentication:", error);
       return false;
@@ -48,16 +49,22 @@ export const isAuthenticated = async (): Promise<boolean> => {
 };
   
   // Logout function (Removes session cookie)
-  export const logout = async (): Promise<void> => {
+  export const logout = async (): Promise<boolean> => {
     try {
-      await fetch(`${API_URL}/logout`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/logout`, {
+        method: "GET",
         credentials: "include", // Ensures cookie is cleared on the server
       });
   
-      console.log("Logged out successfully");
+      if (!response.ok) return false;
+
+      if (response.status !== 200) {
+        return false;
+      }
+      return true;
     } catch (error) {
       console.error("Error logging out:", error);
+      return false;
     }
 };
   

@@ -28,7 +28,10 @@ export default function AdminLoginPage() {
 
   // Check if already authenticated
   useEffect(() => {
-    isAuthenticated().then(()=>router.push("/admin/quiz"))
+    isAuthenticated().then((result)=>{
+        if(result)
+            router.push("/admin/quiz")
+    })
   }, [router])
 
   // Initialize the form
