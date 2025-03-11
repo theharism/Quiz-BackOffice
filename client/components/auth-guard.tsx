@@ -17,12 +17,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     // Check if user is authenticated
-    if (!isAuthenticated() && pathname !== "/admin") {
-      // Redirect to login page
-      router.push("/admin")
-    } else {
-      setLoading(false)
-    }
+    isAuthenticated().then((data)=>{
+        if(data === false && pathname !== "/admin")
+        {
+            router.push("/admin")
+        }
+    }).finally(()=>setLoading(false))
   }, [router, pathname])
 
   if (loading) {

@@ -28,9 +28,7 @@ export default function AdminLoginPage() {
 
   // Check if already authenticated
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.push("/admin/quiz")
-    }
+    isAuthenticated().then(()=>router.push("/admin/quiz"))
   }, [router])
 
   // Initialize the form
@@ -47,7 +45,7 @@ export default function AdminLoginPage() {
     setIsSubmitting(true)
 
     try {
-      const success = login(data.username, data.password)
+      const success = await login(data.username, data.password)
 
       if (success) {
         toast({

@@ -11,8 +11,8 @@ import { toast } from "@/hooks/use-toast"
 export function QuizDashboard() {
   const router = useRouter()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout();
     toast({
       title: "Logged out",
       description: "You have been logged out successfully",
