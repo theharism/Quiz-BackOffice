@@ -32,7 +32,13 @@ exports.getQuestionById = async (req, res) => {
 // Create a new question
 exports.createQuestion = async (req, res) => {
     try {
-        const newQuestion = await Question.create(req.body);
+        const { text, type, isRequired, category, allowMultipleSelections, options } = JSON.parse(req.body.data);
+        options?.forEach((option, index) => {
+            if (req.files[index]) {
+                option.image = req.files[index].destination + req.files[index].filename
+            }
+        });
+        const newQuestion = await Question.create({text, type, isRequired, category, allowMultipleSelections, options});
         logger.info('Created new question successfully');
         res.status(201).json({ success: true, data: newQuestion });
     } catch (error) {
@@ -44,7 +50,18 @@ exports.createQuestion = async (req, res) => {
 // Update a question
 exports.updateQuestion = async (req, res) => {
     try {
-        const updatedQuestion = await Question.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+
+        const { text, type, isRequired, category, allowMultipleSelections, options } = JSON.parse(req.body.data);
+        
+        let index = 0;
+        options?.forEach((option) => {
+            if (req.files[index] && typeof option.image === 'object') {
+                option.image = req.files[index].destination + req.files[index].filename
+                index += 1
+            }
+        });
+        
+        const updatedQuestion = await Question.findByIdAndUpdate(req.params.id, { text, type, isRequired, category, allowMultipleSelections, options }, { new: true, runValidators: true });
         if (!updatedQuestion) {
             logger.warn(`Question with ID ${req.params.id} not found for update`);
             return res.status(404).json({ success: false, message: 'Question not found' });
