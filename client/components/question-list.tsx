@@ -170,6 +170,7 @@ export function QuestionList() {
             <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
             <SelectItem value="true-false">True/False</SelectItem>
             <SelectItem value="numeric">Numeric</SelectItem>
+            <SelectItem value="slider">Slider</SelectItem>
           </SelectContent>
         </Select>
       </div>

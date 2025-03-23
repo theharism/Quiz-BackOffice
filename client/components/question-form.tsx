@@ -1,55 +1,77 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Plus, Save, Trash2 } from "lucide-react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { toast } from "@/hooks/use-toast"
-import { createQuestion } from "@/lib/api"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Save, Trash2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { toast } from "@/hooks/use-toast";
+import { createQuestion } from "@/lib/api";
 
 // Define the score categories
-const SCORE_CATEGORIES = ["TRT", "Build", "Peptides", "Lean", "GLP1", "Tadalafil"]
+const SCORE_CATEGORIES = [
+  "TRT",
+  "Build",
+  "Peptides",
+  "Lean",
+  "GLP1",
+  "Tadalafil",
+];
 
 // Define the option schema
 const optionSchema = z.object({
   text: z.string().min(1, "Option text is required"),
+  image: z.any(),
   score: z.record(
     z.string(),
     z.number().or(
       z.string().transform((val) => {
-        const parsed = Number.parseFloat(val)
-        if (isNaN(parsed)) return 0
-        return parsed
-      }),
-    ),
+        const parsed = Number.parseFloat(val);
+        if (isNaN(parsed)) return 0;
+        return parsed;
+      })
+    )
   ),
-})
+});
 
 // Define the form schema
 const formSchema = z.object({
   text: z.string().min(1, "Question text is required"),
-  type: z.enum(["text", "multiple-choice", "true-false", "numeric"]),
+  type: z.enum(["text", "multiple-choice", "true-false", "numeric", "slider"]),
   isRequired: z.boolean().default(true),
   category: z.enum(["basic-info", "symptoms", "lifestyle"]),
   allowMultipleSelections: z.boolean().optional(),
   options: z.array(optionSchema).optional(),
-})
+});
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 export function QuestionForm() {
-  const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -62,79 +84,82 @@ export function QuestionForm() {
       allowMultipleSelections: false,
       options: [],
     },
-  })
+  });
 
-  const questionType = form.watch("type")
-  const options = form.watch("options") || []
+  const questionType = form.watch("type");
+  const options = form.watch("options") || [];
 
   // Add a new option
   const addOption = () => {
-    const currentOptions = form.getValues("options") || []
-    const scoreObj: Record<string, number> = {}
+    const currentOptions = form.getValues("options") || [];
+    const scoreObj: Record<string, number> = {};
 
     // Initialize scores for all categories to 0
     SCORE_CATEGORIES.forEach((category) => {
-      scoreObj[category] = 0
-    })
+      scoreObj[category] = 0;
+    });
 
-    form.setValue("options", [...currentOptions, { text: "", score: scoreObj }])
-  }
+    form.setValue("options", [
+      ...currentOptions,
+      { text: "", image: undefined, score: scoreObj },
+    ]);
+  };
 
   // Remove an option
   const removeOption = (index: number) => {
-    const currentOptions = form.getValues("options") || []
+    const currentOptions = form.getValues("options") || [];
     form.setValue(
       "options",
-      currentOptions.filter((_, i) => i !== index),
-    )
-  }
+      currentOptions.filter((_, i) => i !== index)
+    );
+  };
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // Create the question via API
-      await createQuestion(data)
+      await createQuestion(data);
 
       toast({
         title: "Question created",
         description: "Your question has been created successfully.",
-      })
+      });
 
       // Navigate back to the questions list
-      router.push("/admin/quiz")
+      router.push("/admin/quiz");
     } catch (error) {
       toast({
         title: "Error",
         description: "There was an error creating your question.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   // Initialize true/false options if needed
   const initializeTrueFalseOptions = () => {
     if (questionType === "true-false" && (!options || options.length === 0)) {
-      const scoreObj: Record<string, number> = {}
+      const scoreObj: Record<string, number> = {};
 
       // Initialize scores for all categories to 0
       SCORE_CATEGORIES.forEach((category) => {
-        scoreObj[category] = 0
-      })
+        scoreObj[category] = 0;
+      });
 
       form.setValue("options", [
         { text: "True", score: { ...scoreObj } },
         { text: "False", score: { ...scoreObj } },
-      ])
+      ]);
     }
-  }
+  };
 
   // Effect to initialize true/false options
   if (questionType === "true-false") {
-    initializeTrueFalseOptions()
+    initializeTrueFalseOptions();
   }
 
   return (
@@ -157,7 +182,11 @@ export function QuestionForm() {
                 <FormItem>
                   <FormLabel>Question Text</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter your question here..." className="min-h-[100px]" {...field} />
+                    <Textarea
+                      placeholder="Enter your question here..."
+                      className="min-h-[100px]"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -172,7 +201,10 @@ export function QuestionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Question Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select question type" />
@@ -180,9 +212,12 @@ export function QuestionForm() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                        <SelectItem value="multiple-choice">
+                          Multiple Choice
+                        </SelectItem>
                         <SelectItem value="true-false">True/False</SelectItem>
                         <SelectItem value="numeric">Numeric</SelectItem>
+                        <SelectItem value="slider">Slider</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -198,10 +233,15 @@ export function QuestionForm() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5">
                       <FormLabel>Required</FormLabel>
-                      <FormDescription>Is this question required?</FormDescription>
+                      <FormDescription>
+                        Is this question required?
+                      </FormDescription>
                     </div>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -214,7 +254,10 @@ export function QuestionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
@@ -233,18 +276,24 @@ export function QuestionForm() {
             </div>
 
             {/* Multiple Selection Option (for multiple-choice and true-false) */}
-            {(questionType === "multiple-choice" || questionType === "true-false") && (
+            {(questionType === "multiple-choice" ||
+              questionType === "true-false") && (
               <FormField
                 control={form.control}
                 name="allowMultipleSelections"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>Allow multiple selections</FormLabel>
-                      <FormDescription>Enable users to select multiple options as their answer</FormDescription>
+                      <FormDescription>
+                        Enable users to select multiple options as their answer
+                      </FormDescription>
                     </div>
                   </FormItem>
                 )}
@@ -252,33 +301,93 @@ export function QuestionForm() {
             )}
 
             {/* Options for multiple-choice and true-false */}
-            {(questionType === "multiple-choice" || questionType === "true-false") && (
+            {(questionType === "multiple-choice" ||
+              questionType === "true-false" ||
+              questionType === "slider") && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">Options</h3>
-                  {questionType === "multiple-choice" && (
-                    <Button type="button" variant="outline" size="sm" onClick={addOption}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Option
-                    </Button>
-                  )}
+                  {questionType === "multiple-choice" ||
+                    (questionType === "slider" && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addOption}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Option
+                      </Button>
+                    ))}
                 </div>
 
                 {options.map((option, index) => (
                   <Card key={index} className="p-4">
+                    {questionType === "slider" && (
+                      <div className="flex justify-between items-start mb-4">
+                        <FormField
+                          control={form.control}
+                          name={`options.${index}.image`}
+                          render={({ field }) => {
+                            const imagePreview =
+                              typeof field.value === "string"
+                                ? field.value
+                                : !field.value
+                                ? undefined
+                                : URL.createObjectURL(field.value[0]);
+
+                            return (
+                              <FormItem className="flex-1 mr-4">
+                                <FormLabel>Slider Image</FormLabel>
+                                <FormControl>
+                                  <div className="col-span-4 flex flex-col items-center">
+                                    {imagePreview && (
+                                      <img
+                                        src={imagePreview}
+                                        alt="Image preview"
+                                        className="h-20 w-20 rounded-full flex"
+                                      />
+                                    )}
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) =>
+                                        field.onChange(
+                                          e.target.files
+                                            ? Array.from(e.target.files)
+                                            : []
+                                        )
+                                      }
+                                      className="mt-2"
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-start mb-4">
                       <FormField
                         control={form.control}
                         name={`options.${index}.text`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1 mr-4">
-                            <FormLabel>Option Text</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="Enter option text" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          return (
+                            <FormItem className="flex-1 mr-4">
+                              <FormLabel>{ questionType === 'slider' ? "Slider Value" : "Option Text"}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Enter slider value"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                       {questionType === "multiple-choice" && (
                         <Button
@@ -307,22 +416,26 @@ export function QuestionForm() {
                                   {category === "TRT"
                                     ? "TRT (Testosterone Replacement Therapy)"
                                     : category === "Build"
-                                      ? "Build (Muscle Building)"
-                                      : category === "Peptides"
-                                        ? "Peptides"
-                                        : category === "Lean"
-                                          ? "Lean (Fat Loss / Lean Body)"
-                                          : category === "GLP1"
-                                            ? "GLP1 (Glucagon-like Peptide-1)"
-                                            : category === "Tadalafil"
-                                              ? "Tadalafil (Libido / Erectile Dysfunction)"
-                                              : category}
+                                    ? "Build (Muscle Building)"
+                                    : category === "Peptides"
+                                    ? "Peptides"
+                                    : category === "Lean"
+                                    ? "Lean (Fat Loss / Lean Body)"
+                                    : category === "GLP1"
+                                    ? "GLP1 (Glucagon-like Peptide-1)"
+                                    : category === "Tadalafil"
+                                    ? "Tadalafil (Libido / Erectile Dysfunction)"
+                                    : category}
                                 </FormLabel>
                                 <FormControl>
                                   <Input
                                     type="number"
                                     {...field}
-                                    onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        Number.parseFloat(e.target.value) || 0
+                                      )
+                                    }
                                     value={field.value || 0}
                                   />
                                 </FormControl>
@@ -341,6 +454,5 @@ export function QuestionForm() {
         </Form>
       </CardContent>
     </Card>
-  )
+  );
 }
-

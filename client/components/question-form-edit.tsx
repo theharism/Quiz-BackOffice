@@ -24,6 +24,7 @@ const SCORE_CATEGORIES = ["TRT", "Build", "Peptides", "Lean", "GLP1", "Tadalafil
 const optionSchema = z.object({
   _id: z.string().optional(),
   text: z.string().min(1, "Option text is required"),
+  image:z.any(),
   score: z.record(
     z.string(),
     z.number().or(
@@ -39,7 +40,7 @@ const optionSchema = z.object({
 // Define the form schema
 const formSchema = z.object({
   text: z.string().min(1, "Question text is required"),
-  type: z.enum(["text", "multiple-choice", "true-false", "numeric"]),
+  type: z.enum(["text", "multiple-choice", "true-false", "numeric", "slider"]),
   isRequired: z.boolean().default(true),
   category: z.enum(["basic-info", "symptoms", "lifestyle"]),
   allowMultipleSelections: z.boolean().optional(),
@@ -188,6 +189,7 @@ export function QuestionFormEdit({ question }: QuestionFormEditProps) {
                         <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
                         <SelectItem value="true-false">True/False</SelectItem>
                         <SelectItem value="numeric">Numeric</SelectItem>
+                        <SelectItem value="slider">Slider</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -257,11 +259,11 @@ export function QuestionFormEdit({ question }: QuestionFormEditProps) {
             )}
 
             {/* Options for multiple-choice and true-false */}
-            {(questionType === "multiple-choice" || questionType === "true-false") && (
+            {(questionType === "multiple-choice" || questionType === "true-false" || questionType === 'slider') && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">Options</h3>
-                  {questionType === "multiple-choice" && (
+                  {questionType === "multiple-choice" || questionType === 'slider' && (
                     <Button type="button" variant="outline" size="sm" onClick={addOption}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Option
@@ -271,6 +273,53 @@ export function QuestionFormEdit({ question }: QuestionFormEditProps) {
 
                 {options.map((option, index) => (
                   <Card key={index} className="p-4">
+                    { questionType === "slider" && (
+                      <div className="flex justify-between items-start mb-4">
+                        <FormField
+                          control={form.control}
+                          name={`options.${index}.image`}
+                          render={({ field }) => {
+                            const imagePreview =
+                              typeof field.value === "string"
+                                ? field.value
+                                : !field.value
+                                ? undefined
+                                : URL.createObjectURL(field.value[0]);
+
+                            return (
+                              <FormItem className="flex-1 mr-4">
+                                <FormLabel>Slider Image</FormLabel>
+                                <FormControl>
+                                  <div className="col-span-4 flex flex-col items-center">
+                                    {imagePreview && (
+                                      <img
+                                        src={imagePreview}
+                                        alt="Image preview"
+                                        className="h-20 w-20 rounded-full flex"
+                                      />
+                                    )}
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) =>
+                                        field.onChange(
+                                          e.target.files
+                                            ? Array.from(e.target.files)
+                                            : []
+                                        )
+                                      }
+                                      className="mt-2"
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-start mb-4">
                       <FormField
                         control={form.control}

@@ -35,7 +35,11 @@ const nextConfig = {
       {
         source: "/admin/uploads/:path*",
         destination: `http://localhost:3005/uploads/:path*`, // ✅ Proxy `/admin/uploads/` correctly
-      }
+      },
+      {
+        source: "/admin/quiz/edit-question/uploads/:path*",
+        destination: "http://localhost:3005/uploads/:path*", // Proxy to backend
+      },
     ];
   },
 }
