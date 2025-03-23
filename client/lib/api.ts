@@ -3,14 +3,15 @@
 export interface QuestionOption {
   _id?: string;
   text: string;
+  image: Array<File> | string;
   score: Record<string, number>;
 }
 
 export interface Question {
   _id: string;
   text: string;
-  type: "text" | "multiple-choice" | "true-false" | "numeric";
-  allowMultipleSelections: boolean;
+  type: "text" | "multiple-choice" | "true-false" | "numeric" | "slider";
+  allowMultipleSelections: boolean | undefined;
   options: QuestionOption[];
   isRequired: boolean;
   category: string;
@@ -70,12 +71,19 @@ export async function createQuestion(
   question: Omit<Question, "_id">
 ): Promise<Question> {
   try {
+
+    const body = {...question,options:question.options?.map(opt => {return {...opt,image:opt.image[0]}})}
+
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(body));
+    const files = body.options.map(opt => opt.image)
+    files.forEach((file, index) => {
+        formData.append("images", file);
+    });
+
     const response = await fetch(`${API_URL}/questions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(question),
+      body: formData,
       credentials: "include"
     });
 
@@ -101,13 +109,32 @@ export async function updateQuestion(
   id: string,
   question: Partial<Question>
 ): Promise<Question> {
+
+  const body = {
+    ...question,
+    options: question.options?.map(opt => ({
+      ...opt,
+      image: typeof opt.image === "string" ? opt.image : opt.image[0]
+    }))
+  };
+  
+  const formData = new FormData();
+  formData.append("data", JSON.stringify(body));
+  
+  const files = body?.options
+    ?.map(opt => (typeof opt.image !== "string" ? opt.image : null))
+    .filter(opt => opt !== null);
+  
+  files?.forEach(file => {
+    formData.append("images", file);
+  });
+
+  console.log(files)
+
   try {
     const response = await fetch(`${API_URL}/questions/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(question),
+      body: formData,
       credentials: "include"
     });
 
