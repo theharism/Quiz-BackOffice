@@ -7,6 +7,7 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  basePath: "/admin",
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -25,8 +26,12 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: `http://localhost:${process.env.PORT}/api/:path*`, // Proxy API requests
+        destination: `http://localhost:3005/api/:path*`, // Proxy API requests
       },
+      {
+        source: "/admin/api/:path*",
+        destination: `http://localhost:3005/api/:path*`, // ✅ Proxy `/admin/api/` correctly
+      }
     ];
   },
 }

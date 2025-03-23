@@ -41,7 +41,7 @@ export interface HomePage {
   __v?: number;
 }
 
-const API_URL = "http://localhost:3005/api/v1";
+const API_URL = "/admin/api/v1";
 
 // Fetch all questions
 export async function fetchQuestions(): Promise<Question[]> {

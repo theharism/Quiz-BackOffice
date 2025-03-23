@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3005/api/v1/auth";
+const API_URL = "/admin/api/v1/auth";
 
 // Login function
 export const login = async (username: string, password: string): Promise<boolean> => {

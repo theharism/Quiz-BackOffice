@@ -7,7 +7,7 @@
     "server": "cross-env NODE_ENV=development nodemon server.js",
     "server:prod": "cross-env NODE_ENV=production node server.js",
     "server:staging": "cross-env NODE_ENV=staging nodemon server.js",
-    "client": "npm run dev --prefix client",
+    "client": "npm run start --prefix client",
     "build": "cross-env npm install --legacy-peer-deps --prefix client && npm run build --prefix client",
     "gzip": "gzip -r -k client/dist",
     "dev": "cross-env concurrently \"npm run server\" \"npm run client\" ",
