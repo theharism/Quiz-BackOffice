@@ -24,6 +24,23 @@ interface ApiResponse {
   data: Question[];
 }
 
+interface HomePageFetchApiResponse {
+  success: boolean;
+  data: HomePage;
+}
+
+export interface HomePage {
+  _id: string;
+  logo: string;
+  heading: string;
+  subHeading: string;
+  buttonText: string;
+  completionTime: string;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
 const API_URL = "http://localhost:3005/api/v1";
 
 // Fetch all questions
@@ -130,6 +147,65 @@ export async function deleteQuestion(id: string): Promise<void> {
     }
   } catch (error) {
     console.error("Error deleting question:", error);
+    throw error;
+  }
+}
+
+// Fetch homepage
+export async function fetchHomePage(): Promise<HomePage> {
+  try {
+    const response = await fetch(`${API_URL}/landing-page-content?latest=true`,{
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data: HomePageFetchApiResponse = await response.json();
+
+    if (!data.success) {
+      throw new Error("Failed to fetch homepage");
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching homepage:", error);
+    throw error;
+  }
+}
+
+export async function saveHomePage(
+  homepage: Omit<HomePage, "_id">
+): Promise<HomePage> {
+  try {
+
+    const formData = new FormData();
+    formData.append('logo', homepage.logo);
+    formData.append('heading', homepage.heading);
+    formData.append('subHeading', homepage.subHeading);
+    formData.append('buttonText', homepage.buttonText);
+    formData.append('completionTime', homepage.completionTime);
+
+    const response = await fetch(`${API_URL}/landing-page-content`, {
+      method: "POST",
+      body: formData,
+      credentials: "include"
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error("Failed to save homepage");
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error("Error saving homepage:", error);
     throw error;
   }
 }
