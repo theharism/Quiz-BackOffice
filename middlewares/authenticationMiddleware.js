@@ -4,10 +4,9 @@ const jwt = require("jsonwebtoken");
 
 exports.Verify = async (req, res, next) => {
     try {
-        const authHeader = req.headers["cookie"]; // get the session cookie from request header
-        if (!authHeader) return res.sendStatus(401); // if there is no cookie from request header, send an unauthorized response.
-        const cookie = authHeader.split("=")[1]; // If there is, split the cookie string to get the actual jwt
-console.log(cookie,authHeader);
+        const cookie = req.cookies.SessionID; // get the session cookie from request header
+        if (!cookie) return res.sendStatus(401); // if there is no cookie from request header, send an unauthorized response.
+        
         // Verify using jwt to see if token has been tampered with or if it has expired.
         // that's like checking the integrity of the cookie
         jwt.verify(cookie, keys.SECRET_ACCESS_TOKEN, async (err, decoded) => {
