@@ -24,7 +24,7 @@ export function QuizDashboard() {
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto py-6 rounded border p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Quiz Questions</h1>
         <div className="flex space-x-2">
