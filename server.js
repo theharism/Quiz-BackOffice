@@ -14,8 +14,16 @@ const app = express();
 db();
 swagger(app);
 
+const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
+
 app.use(cors({
-  origin: 'http://localhost:3000,http://localhost:3001',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, origin); // ✅ Allow only the requesting origin
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: 'GET,POST,PUT,DELETE',
   allowedHeaders: 'Content-Type,Authorization',
   credentials: true
