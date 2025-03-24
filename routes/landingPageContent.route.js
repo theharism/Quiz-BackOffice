@@ -4,7 +4,7 @@ const landingPageContentController = require('../controllers/landingPageContent.
 const { Verify, VerifyRole } = require('../middlewares/authenticationMiddleware');
 const upload = require('../config/multer');
 
-router.get('/',Verify,VerifyRole, landingPageContentController.getAllLandingPageContents);
+router.get('/', landingPageContentController.getAllLandingPageContents);
 router.get('/:id',Verify,VerifyRole, landingPageContentController.getLandingPageContentById);
 router.post('/', upload.single("logo"), landingPageContentController.createLandingPageContent);
 router.put('/:id',Verify,VerifyRole, upload.single("logo"), landingPageContentController.updateLandingPageContent);
