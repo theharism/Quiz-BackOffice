@@ -14,10 +14,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Search } from "lucide-react"
+import { Save, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { fetchQuestions, deleteQuestion, type Question } from "@/lib/api"
+import { fetchQuestions, deleteQuestion, type Question, updateQuestionsOrder } from "@/lib/api"
+// DnD-kit imports
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { arrayMove } from "@dnd-kit/sortable"
 
 export function QuestionList() {
   // State for questions
@@ -28,10 +40,23 @@ export function QuestionList() {
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  const [hasOrderChanged, setHasOrderChanged] = useState(false)
+  const [isSavingOrder, setIsSavingOrder] = useState(false)
   // State for delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null)
+
+ // DnD sensors
+ const sensors = useSensors(
+  useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  }),
+  useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  }),
+)
 
   // Load questions from API
   useEffect(() => {
@@ -39,7 +64,12 @@ export function QuestionList() {
       try {
         setIsLoading(true)
         const data = await fetchQuestions()
-        setQuestions(data)
+        // Ensure each question has an order property
+        const questionsWithOrder = data?.map((q, index) => ({
+          ...q,
+          order: q.order !== undefined ? q.order : index,
+        }))
+        setQuestions(questionsWithOrder)
         setError(null)
       } catch (err) {
         setError("Failed to load questions. Please try again later.")
@@ -75,13 +105,6 @@ export function QuestionList() {
       result = result.filter((q) => q.type === typeFilter)
     }
 
-    // Sort by creation date (newest first)
-    result.sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
-      return dateB - dateA
-    })
-
     setFilteredQuestions(result)
   }, [questions, searchTerm, categoryFilter, typeFilter])
 
@@ -115,6 +138,62 @@ export function QuestionList() {
     }
     setDeleteDialogOpen(false)
     setQuestionToDelete(null)
+  }
+
+   // Handle drag end event
+   const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      setQuestions((items) => {
+        // Find the indices of the dragged item and the drop target
+        const oldIndex = items.findIndex((item) => item._id === active.id)
+        const newIndex = items.findIndex((item) => item._id === over.id)
+
+        // Reorder the array
+        const newArray = arrayMove(items, oldIndex, newIndex)
+
+        // Update the order property for each item
+        const updatedArray = newArray.map((item, index) => ({
+          ...item,
+          order: index,
+        }))
+
+        setHasOrderChanged(true)
+        return updatedArray
+      })
+    }
+  }
+
+  // Save the new order to the API
+  const saveOrder = async () => {
+    try {
+      setIsSavingOrder(true)
+
+      // Prepare the data for the API
+      const orderData = questions.map((q, index) => ({
+        _id: q._id,
+        order: index,
+      }))
+
+      // Call the API to update the order
+      await updateQuestionsOrder(orderData)
+
+      setHasOrderChanged(false)
+
+      toast({
+        title: "Order saved",
+        description: "The question order has been updated successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save the question order. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingOrder(false)
+    }
   }
 
   if (isLoading) {
@@ -173,14 +252,25 @@ export function QuestionList() {
             <SelectItem value="slider">Slider</SelectItem>
           </SelectContent>
         </Select>
+
+        {hasOrderChanged && (
+          <Button onClick={saveOrder} disabled={isSavingOrder} className="whitespace-nowrap">
+            <Save className="mr-2 h-4 w-4" />
+            {isSavingOrder ? "Saving..." : "Save Order"}
+          </Button>
+        )}
       </div>
 
       {/* Questions list */}
       {filteredQuestions.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredQuestions.map((question) => (
-            <QuestionCard key={question._id} question={question} onDelete={() => confirmDelete(question._id)} />
-          ))}
+        <div className="grid grid-cols-1 gap-4 pl-8">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filteredQuestions.map((q) => q._id)} strategy={verticalListSortingStrategy}>
+              {filteredQuestions.map((question) => (
+                <QuestionCard key={question._id} question={question} onDelete={() => confirmDelete(question._id)} />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       ) : (
         <div className="text-center py-10">

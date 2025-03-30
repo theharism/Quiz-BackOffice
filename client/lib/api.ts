@@ -14,6 +14,7 @@ export interface Question {
   allowMultipleSelections: boolean | undefined;
   options: QuestionOption[];
   isRequired: boolean;
+  order?: number;
   category: string;
   createdAt?: string;
   updatedAt?: string;
@@ -175,6 +176,33 @@ export async function deleteQuestion(id: string): Promise<void> {
   } catch (error) {
     console.error("Error deleting question:", error);
     throw error;
+  }
+}
+
+// Update questions order
+export async function updateQuestionsOrder(questions: { _id: string; order: number }[]): Promise<void> {
+  try {
+
+    const response = await fetch(`${API_URL}/questions/reorder`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ questions }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (!data.success) {
+      throw new Error("Failed to update questions order")
+    }
+  } catch (error) {
+    console.error("Error updating questions order:", error)
+    throw error
   }
 }
 

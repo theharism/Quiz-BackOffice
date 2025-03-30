@@ -4,9 +4,11 @@ import type { Question } from "@/lib/api"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2, Calendar, CheckCircle, XCircle } from "lucide-react"
+import { Edit, Trash2, Calendar, CheckCircle, XCircle, GripVertical } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
+import { CSS } from "@dnd-kit/utilities"
+import { useSortable } from "@dnd-kit/sortable"
 
 interface QuestionCardProps {
   question: Question
@@ -14,6 +16,16 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, onDelete }: QuestionCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: question._id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
   // Format the creation date
   const formattedDate = question.createdAt
     ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true })
@@ -64,7 +76,7 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow" ref={setNodeRef} style={style}>
       <CardContent className="pt-6">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-start">
@@ -74,6 +86,11 @@ export function QuestionCard({ question, onDelete }: QuestionCardProps) {
                 {getCategoryText(question.category)}
               </Badge>
               <Badge variant="secondary">{getQuestionTypeText(question.type)}</Badge>
+              <div className="cursor-grab active:cursor-grabbing">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" {...attributes} {...listeners}>
+                  <GripVertical className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
 
