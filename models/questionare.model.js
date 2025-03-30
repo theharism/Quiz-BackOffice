@@ -7,6 +7,7 @@ const QuestionSchema = new mongoose.Schema({
     enum: ["text", "multiple-choice", "true-false", "numeric", "slider"],
     required: true,
   },
+  order: { type: Number, autoIncrement: true },
   allowMultipleSelections: {
     type: Boolean,
     required: function () {

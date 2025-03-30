@@ -4,8 +4,18 @@ const logger = require('../services/logger'); // Assuming you have a logger serv
 // Get all questions
 exports.getAllQuestions = async (req, res) => {
     try {
-        const questions = await Question.find();
+        let questions = await Question.find();
         logger.info('Fetched all questions successfully');
+        // Sort by order if available, otherwise by creation date
+        questions = questions.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order
+        }
+        // Fallback to creation date
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return dateB - dateA
+      })
         res.status(200).json({ success: true, data: questions });
     } catch (error) {
         logger.error('Error fetching questions: ', error);
@@ -89,3 +99,37 @@ exports.deleteQuestion = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+
+exports.reOrderQuestions = async (req, res) => {
+    try {
+      const { questions } = req.body; // Expecting an array of objects [{ id, order }]
+  
+      if (!Array.isArray(questions) || questions.length === 0) {
+        return res.status(400).json({ message: "Invalid input data." });
+      }
+  
+      // Validate input
+      for (const { _id, order } of questions) {
+        if (!_id || typeof order !== "number") {
+          return res.status(400).json({ message: "Each item must have an id and a numeric order." });
+        }
+      }
+  
+      // Bulk update orders
+      const bulkOps = questions.map(({ _id, order }) => ({
+        updateOne: {
+          filter: { _id: _id },
+          update: { $set: { order } }
+        }
+      }));
+  
+      // Execute bulk write
+      await Question.bulkWrite(bulkOps);
+  
+      res.status(200).json({ success:true ,message: "Questions reordered successfully." });
+    } catch (error) {
+      console.error("Error reordering questions:", error);
+      res.status(500).json({ success:false, message: "Internal server error." });
+    }
+};
+  
