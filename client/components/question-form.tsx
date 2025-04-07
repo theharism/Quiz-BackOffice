@@ -307,8 +307,8 @@ export function QuestionForm() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium">Options</h3>
-                  {questionType === "multiple-choice" ||
-                    (questionType === "slider" && (
+                  {(questionType === "multiple-choice" ||
+                    questionType === "slider") && (
                       <Button
                         type="button"
                         variant="outline"
@@ -318,7 +318,7 @@ export function QuestionForm() {
                         <Plus className="h-4 w-4 mr-2" />
                         Add Option
                       </Button>
-                    ))}
+                    )}
                 </div>
 
                 {options.map((option, index) => (
