@@ -43,11 +43,13 @@ exports.getQuestionById = async (req, res) => {
 exports.createQuestion = async (req, res) => {
     try {
         const { text, type, isRequired, category, allowMultipleSelections, options } = JSON.parse(req.body.data);
-        options?.forEach((option, index) => {
-            if (req.files[index]) {
-                option.image = req.files[index].destination + req.files[index].filename
-            }
-        });
+        if(type === 'slider'){
+            options?.forEach((option, index) => {
+                if (req.files[index]) {
+                    option.image = req.files[index].destination + req.files[index].filename
+                }
+            });
+        }
         const newQuestion = await Question.create({text, type, isRequired, category, allowMultipleSelections, options});
         logger.info('Created new question successfully');
         res.status(201).json({ success: true, data: newQuestion });

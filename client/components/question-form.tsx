@@ -381,7 +381,7 @@ export function QuestionForm() {
                               <FormControl>
                                 <Input
                                   {...field}
-                                  placeholder="Enter slider value"
+                                  placeholder={questionType === 'slider' ? "Enter slider value" : "Enter option text"}
                                 />
                               </FormControl>
                               <FormMessage />
