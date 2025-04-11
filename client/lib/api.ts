@@ -88,8 +88,8 @@ export async function createQuestion(
     if(body.type === 'slider')
     {
       files = body.options.map(opt => opt.image)
-      files.forEach((file, index) => {
-          formData.append("images", file);
+      files.forEach((file) => {
+        formData.append("images", file);
       });
     }
 
@@ -121,27 +121,36 @@ export async function updateQuestion(
   id: string,
   question: Partial<Question>
 ): Promise<Question> {
-
-  const body = {
-    ...question,
-    options: question.options?.map(opt => ({
-      ...opt,
-      image: typeof opt.image === "string" ? opt.image : opt.image[0]
-    }))
-  };
   
+  let body;
+  if(question.type === 'slider')
+  {
+    body = {
+      ...question,
+      options: question.options?.map(opt => ({
+        ...opt,
+        image: typeof opt.image === "string" ? opt.image : opt.image[0]
+      }))
+    }
+  }
+  else{
+    body = {...question}
+  }
+
   const formData = new FormData();
   formData.append("data", JSON.stringify(body));
-  
-  const files = body?.options
-    ?.map(opt => (typeof opt.image !== "string" ? opt.image : null))
-    .filter(opt => opt !== null);
-  
-  files?.forEach(file => {
-    formData.append("images", file);
-  });
 
-  console.log(files)
+  let files;
+  if(body.type === 'slider')
+  {
+    files = body?.options
+      ?.map(opt => (typeof opt.image !== "string" ? opt.image : null))
+      .filter(opt => opt !== null);
+    
+    files?.forEach(file => {
+      formData.append("images", file);
+    });
+  }
 
   try {
     const response = await fetch(`${API_URL}/questions/${id}`, {
